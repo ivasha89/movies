@@ -12,4 +12,8 @@ class Movie extends Model
     protected $fillable = [
         'imdb_id', 'poster_path', 'title', 'overview', 'release_date', 'vote_average'
     ];
+
+    protected $casts = [
+        'release_date' => 'date:d.m.Y'
+    ];
 }

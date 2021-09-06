@@ -24,9 +24,9 @@
         <section class="my-5">
 
             <!-- Grid row -->
-            <div class="row">
+            <div class="d-flex flex-row">
                 <!-- Grid column -->
-                <div class="col-md-6">
+                <div class="w-50 mr-2">
 
                     <!-- Card -->
                     <div class="card card-cascade wider reverse">
@@ -52,7 +52,7 @@
                                 <small v-if="movie.original_language != ''">Оригинальный язык: @{{ movie.original_language }}</small><hr>
                                 <small v-if="movie.release_date != ''">Дата выхода: @{{ movie.release_date }}</small><hr>
                                 <small v-if="movie.vote_average != ''">Средняя оценка: @{{ movie.vote_average }}</small><hr>
-                                <button v-if="movieInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(movie.id)">-</button>
+                                <button v-if="movieInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(movie.imdb_id)">-</button>
                                 <button v-else class="btn btn-primary addToFavourite" @click="addToFav(index)">+</button>
                             </div>
                             <!-- Social shares -->
@@ -70,28 +70,32 @@
                     </div>
 
                 </div>
-                <div class="list-group all col-md-4 offset-md-2 card" v-show="visible" v-if="favourites.length">
+                <div class="list-group all w-50 card ml-5" v-show="visible" v-if="favourites.length">
                     <div class="list-group-item d-flex flex-row p-1" v-for="(favor,index) in favourites" :key="index">
                         <div class="w-25 d-flex justify-content-center mr-3">
-                            <img width="80px" :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
+                            <img width="130px" height="90px" :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
                         </div>
                         <div class="w-75">
                             <small class="text-break" v-if="favor.title != ''">Название: <a :href="`/${favor.imdb_id}`">@{{ favor.title }}</a></small><hr>
-                            <small v-if="favor.release_date != ''">Дата выхода: @{{ favor.release_date }}</small><hr>
+                            <small v-if="favor.release_date != ''">Дата выхода: @{{ favor.release_date}}</small><hr>
                             <small v-if="favor.vote_average != ''">Средняя оценка: @{{ favor.vote_average }}</small><hr>
-                            <button class="btn btn-danger addToFavourite" @click="removeFromFav(favor.id)">-</button>
+                            <button class="btn btn-danger addToFavourite" @click="removeFromFav(favor.imdb_id)">-</button>
                         </div>
                         <div class="float-right">
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6" v-show="!visible" v-if="!favourites.length">
+                <div class="card w-50 empty" v-else-if="favourites.length == 0" v-show="visible">
+                    <div class="card-body">
+                        <p>Список избранных пуст</p>
+                    </div>
+                </div>
+                <div class="w-50" v-show="!visible">
                     <div v-for="(video,index) in videos" :key="index">
-                        <div class="container z-depth-1 my-5 py-5">
+                        <div class="container z-depth-1 my-5 py-2">
                             <section>
+                                <small v-if="video.type != ''">@{{video.site}} @{{video.type}}</small>
                                 <iframe width="100%" class="embed-responsive-item" :src="`https://www.youtube.com/embed/${video.key}`" allowfullscreen></iframe>
-                                <small v-if="video.type != ''">Тип видео: @{{video.type}}</small><hr>
-                                <small v-if="video.site != ''">Источник видео: @{{video.site}}</small>
                             </section>
                         </div>
                     </div>
@@ -145,19 +149,7 @@
             created() {
                 let self = this;
 
-                $.ajax({
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    type: "GET",
-                    dataType: "json",
-                    url: "/list",
-                    data: "{}",
-                    success: function (response) {
-                        self.favourites = response
-                        console.log(response)
-                    }
-                })
+                self.getList()
 
                 let presentUrl = window.location.href;
                 let newData = presentUrl.split("/");
@@ -178,6 +170,7 @@
 
                 $.ajax(settings).done(function (response) {
                     self.movie = response;
+                    window.document.title = response.title
                     for(let j = 0;j < self.favourites.length;j++) {
                         if (self.favourites[j].imdb_id == response.id) {
                             self.movieInFavs = true
@@ -226,8 +219,8 @@
                         for (let i = 0; i < self.similar.length; i++) {
                             let src = self.similar[i].backdrop_path ? 'https://image.tmdb.org/t/p/w500'+self.similar[i].backdrop_path : '/img/no-poster.jpg'
                             let data = '<div class="item">' +
-                                '<img width="400px" src="'+src+'"/>' +
-                                '<h4>'+self.similar[i].title+'</h4>' +
+                                '<img class="card-image-drop" width="400px" src="'+src+'"/>' +
+                                '<h4><a href="/'+self.similar[i].id+'">'+self.similar[i].title+'</a></h4>' +
                                 '</div>'
                             $(".owl-carousel").owlCarousel('add',data).owlCarousel('refresh')
                         }
@@ -243,7 +236,7 @@
                         type: "GET",
                         dataType: "json",
                         url: "/list",
-                        data: "{}",
+                        data: {},
                         success: response => {
                             this.favourites = response
                         }
@@ -269,14 +262,16 @@
                     })
                 },
                 removeFromFav(id) {
+                    console.log(id)
                     $.ajax({
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         type: "DELETE",
                         url: "/"+id,
-                        data: "{}",
+                        data: {},
                         success: response => {
+                            console.log(response)
                             if (response.result !== 'undefined') {
                                 this.getList()
                                 alert(response.result)

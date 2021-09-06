@@ -12,7 +12,7 @@
         </div>
         <div class="row" v-if="favourites.length !== 0">
             <!-- Card -->
-            <div class="list-group all ml-5 col-md-12" v-for="(article, index) in favourites" :key="index">
+            <div class="list-group all ml-5 col-md-12 mb-3" v-for="(article, index) in favourites" :key="index">
                 <div class="list-group-item card d-flex flex-row p-1">
 
                     <!-- Card image -->
@@ -29,10 +29,10 @@
                         <hr>
                         <p class="card-title" v-if="article.title != ''"><a :href="`/${article.imdb_id}`"><strong>@{{ article.title }}</strong></a></p>
                         <hr>
-                        <p class="text-monospace" v-if="article.overview != ''">Описание: @{{ article.overview }}</p><hr>
+                        <p v-if="article.overview != ''">Описание: @{{ article.overview }}</p><hr>
                         <p v-if="article.release_date != ''">Дата выхода: @{{ article.release_date }}</p><hr>
                         <p v-if="article.vote_average != ''">Средняя оценка: @{{ article.vote_average }}</p><hr>
-                        <button class="btn btn-danger addToFavourite" @click="removeFromFav(article.id)">-</button>
+                        <button class="btn btn-danger addToFavourite" @click="removeFromFav(article.imdb_id)">-</button>
                     </div>
 
                 </div>
@@ -69,6 +69,10 @@
                     data: "{}",
                     success: function (response) {
                         self.favourites = response
+                        for(let i in self.favourites) {
+                                let date = new Date(self.favourites[i].release_date)
+                                self.favourites[i].release_date_new = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate() ) + '.' + (date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : date.getMonth()+1) + '.' + date.getFullYear()
+                            }
                         console.log(response.length)
                     }
                 })
@@ -83,27 +87,39 @@
                 }
             },
             methods: {
-                async getList() {
-                    await axios.get("/list")
-                        .then(resp => {
-                            this.favourites = resp.data
-                            console.log(resp.data.length)
-                        })
-                        .catch(error => {
-                            alert(error)
-                        })
+                getList() {
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        type: "GET",
+                        dataType: "json",
+                        url: "/list",
+                        data: {},
+                        success: response => {
+                            this.favourites = response
+                        }
+                    })
                 },
-                async removeFromFav(id) {
-                    let self = this
-                    await axios.delete("/"+id)
-                        .then(async response => {
-                            if (response.data.result !== 'undefined') {
-                                alert(response.data.result)
-                                await self.getList()
+                removeFromFav(id) {
+                    console.log(id)
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        type: "DELETE",
+                        url: "/"+id,
+                        data: {},
+                        success: response => {
+                            console.log(response)
+                            if (response.result !== 'undefined') {
+                                this.getList()
+                                alert(response.result)
                             }
-                            else if (response.data.error !== 'undefined') {
-                                alert(response.data.error)
+                            else if (response.error !== 'undefined'){
+                                alert(response.error)
                             }
+                        }
                     })
                 }
             }
@@ -129,6 +145,9 @@
                 success: response => {
                     if (response.result !== 'undefined') {
                         alert(response.result)
+                    }
+                    else if (response.error !== 'undefined'){
+                        alert(response.error)
                     }
                 }
             })

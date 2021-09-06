@@ -7,7 +7,11 @@
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>
-            Movie DB API Project Laravel
+            @hasSection('title')
+                @yield('title')
+            @else
+                Movie DB API Project Laravel
+            @endif
         </title>
         <link rel="stylesheet" href="{{asset('/assets/css/bootstrap.css')}}">
         <!-- Fonts -->
@@ -66,7 +70,7 @@
         @yield('styles')
     </head>
     <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <a class="navbar-brand" href="/">Newizze</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -168,7 +172,7 @@
                         contentType: "application/json; charset=utf-8",
                         url: "/search/"+searchQuery,
                         data: searchQuery,
-                        success: function (response) {
+                        success: response => {
                             results = response.results
                             $(".searchDropdown").html('')
                             $(".searchDropdown").show()

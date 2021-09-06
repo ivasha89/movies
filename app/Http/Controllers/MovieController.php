@@ -92,6 +92,7 @@ class MovieController extends Controller
         }
         if (count($movie)) {
             $movie['imdb_id'] = $movie['id'];
+            $movie['release_date'] = date("Y-m-d", strtotime($movie['release_date']));
             Movie::create($movie);
 
             $answer = [
@@ -150,7 +151,7 @@ class MovieController extends Controller
     public function destroy($id)
     {
         try {
-            $movie = Movie::findOrFail($id);
+            $movie = Movie::where('imdb_id', $id)->firstOrFail();
             $movie->delete();
 
             $answer = [
