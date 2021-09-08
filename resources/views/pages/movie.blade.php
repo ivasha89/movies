@@ -14,10 +14,10 @@
     <div class="container" id="app">
         <div class="row">
             <div class="col-md-6">
-                <h1>@{{ title }}</h1>
+                <h1></h1>
             </div>
             <div class="col-md-6">
-                <button class="float-right btn btn-primary" v-on:click="visible=!visible">@{{visible?'Скрыть':'Отобразить'}}</button>
+                <button class="float-right btn btn-primary" v-on:click="visible=!visible">@{{visible?'Hide':'Show'}}</button>
             </div>
         </div>
             <!-- Section: Blog v.4 -->
@@ -43,15 +43,15 @@
                         <div class="card-body card-body-cascade text-center">
 
                             <!-- Title -->
-                            <h2 class="font-weight-bold"><a>@{{ movie.title }}</a></h2>
+                            <h2 class="font-weight-bold">@{{ movie.title }}</h2>
                             <!-- Data -->
-                            <p>Статус <a><strong>@{{ movie.status }}</strong></a>, @{{ movie.release_date }}</p>
+                            <p>Status: <strong>@{{ movie.status }}</strong></p>
                             <!-- Social shares -->
                             <div class="social-counters">
-                                <small v-if="movie.original_title != ''">Оригинальное имя: @{{ movie.original_title }}</small><hr>
-                                <small v-if="movie.original_language != ''">Оригинальный язык: @{{ movie.original_language }}</small><hr>
-                                <small v-if="movie.release_date != ''">Дата выхода: @{{ movie.release_date }}</small><hr>
-                                <small v-if="movie.vote_average != ''">Средняя оценка: @{{ movie.vote_average }}</small><hr>
+                                <p v-if="movie.original_title != ''">Original title: @{{ movie.original_title }}</p><hr>
+                                <p v-if="movie.original_language != ''">Original language: @{{ movie.original_language }}</p><hr>
+                                <p v-if="movie.release_date != ''">Release date: @{{ movie.release_date }}</p><hr>
+                                <p v-if="movie.vote_average != ''">Vote average: @{{ movie.vote_average }}</p><hr>
                                 <button v-if="movieInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(movie.imdb_id)">-</button>
                                 <button v-else class="btn btn-primary addToFavourite" @click="addToFav(index)">+</button>
                             </div>
@@ -64,30 +64,32 @@
                     <!-- Card -->
 
                     <!-- Excerpt -->
-                    <div class="mt-5">
-
-                        <p>@{{ movie.overview }}</p>
+                    <div class="mt-5 card">
+                        <p class="card-header">Movie Overview</p>
+                        <p class="lead card-body">@{{ movie.overview }}</p>
                     </div>
 
                 </div>
-                <div class="list-group all w-50 card ml-5" v-show="visible" v-if="favourites.length">
-                    <div class="list-group-item d-flex flex-row p-1" v-for="(favor,index) in favourites" :key="index">
-                        <div class="w-25 d-flex justify-content-center mr-3">
-                            <img width="130px" height="90px" :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
-                        </div>
-                        <div class="w-75">
-                            <small class="text-break" v-if="favor.title != ''">Название: <a :href="`/${favor.imdb_id}`">@{{ favor.title }}</a></small><hr>
-                            <small v-if="favor.release_date != ''">Дата выхода: @{{ favor.release_date}}</small><hr>
-                            <small v-if="favor.vote_average != ''">Средняя оценка: @{{ favor.vote_average }}</small><hr>
-                            <button class="btn btn-danger addToFavourite" @click="removeFromFav(favor.imdb_id)">-</button>
-                        </div>
-                        <div class="float-right">
+                <div class="w-50" v-show="visible" v-if="favourites.length">
+                    <div class="card mb-3" v-for="(favor,index) in favourites" :key="index">
+                        <div class="row no-gutters">
+                            <div class="col-md-4">
+                                <img :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <small class="text-break card-title" v-if="favor.title != ''">Title: <a :href="`/${favor.imdb_id}`">@{{ favor.title }}</a></small><hr>
+                                    <small v-if="favor.release_date != ''">Release date: @{{ favor.release_date}}</small><hr>
+                                    <small v-if="favor.vote_average != ''">Vote average: @{{ favor.vote_average }}</small><hr>
+                                    <badge class="badge badge-danger addToFavourite" @click="removeFromFav(favor.imdb_id)">Remove</badge>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card w-50 empty" v-else-if="favourites.length == 0" v-show="visible">
                     <div class="card-body">
-                        <p>Список избранных пуст</p>
+                        <p>Favourite list is empty</p>
                     </div>
                 </div>
                 <div class="w-50" v-show="!visible">
@@ -129,7 +131,7 @@
                 margin:10,
                 items:3,
                 autoplay:true,
-                autoplayTimeout:2000,
+                autoplayTimeout:4000,
                 autoHeight:true
             })
         })
@@ -157,8 +159,7 @@
                 let settings = {
                     "async": true,
                     "crossDomain": false,
-                    'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'?api_key=9a5ee1373a374dd337c79bf08b38a072&language=ru-RU&page=1',
-                    //'url': 'https://api.themoviedb.org/3/movie/popular?api_key=9a5ee1373a374dd337c79bf08b38a072&language=ru-RU&page='+pageNumber,
+                    'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'?api_key=9a5ee1373a374dd337c79bf08b38a072&page=1',
                     "method": "GET",
                     "headers": {
                         "Content-Type": "application/json",
@@ -170,6 +171,8 @@
 
                 $.ajax(settings).done(function (response) {
                     self.movie = response;
+                    let date = new Date(response.release_date)
+                    self.movie.release_date = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate() ) + '.' + (date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : date.getMonth()+1) + '.' + date.getFullYear()
                     window.document.title = response.title
                     for(let j = 0;j < self.favourites.length;j++) {
                         if (self.favourites[j].imdb_id == response.id) {
@@ -183,7 +186,7 @@
                     let video = {
                         "async": true,
                         "crossDomain": false,
-                        'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'/videos?api_key=9a5ee1373a374dd337c79bf08b38a072&language=en-US',
+                        'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'/videos?api_key=9a5ee1373a374dd337c79bf08b38a072',
                         "method": "GET",
                         "headers": {
                             "Content-Type": "application/json",
@@ -203,7 +206,7 @@
                     let similar = {
                         "async": true,
                         "crossDomain": false,
-                        'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'/similar?api_key=9a5ee1373a374dd337c79bf08b38a072&language=ru-RU&page=1',
+                        'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'/similar?api_key=9a5ee1373a374dd337c79bf08b38a072&page=1',
                         "method": "GET",
                         "headers": {
                             "Content-Type": "application/json",

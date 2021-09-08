@@ -32,14 +32,13 @@
                 position: fixed;
                 background: #333;
                 z-index: 99999;
-                padding-top: 20%;
+                padding-top: 10%;
                 padding-left: 20%;
             }
             #searchInput {
                 background: #333;
                 width: 65%;
                 padding: 20px;
-                border: none;
                 border-bottom: solid 1px #fff !important;
                 font-size: 25px;
                 color: #fff;
@@ -51,7 +50,7 @@
             }
             .searchDropdown {
                 overflow: scroll !important;
-                height: 300px;
+                height: 365px;
                 width: 65%;
                 display: none;
             }
@@ -79,58 +78,55 @@
         <div class="collapse navbar-collapse" id="navbarColor01">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Популярные
+                    <a class="nav-link" href="/">Popular
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/latest">Последний</a>
+                    <a class="nav-link" href="/toprated">Top rated</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/toprated">Самые известные</a>
+                    <a class="nav-link" href="/latest">Latest</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/favourites">Избранное</a>
+                    <a class="nav-link" href="/favourites">Favourite</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-                    Поделиться ссылкой</a>
+                    Share link</a>
                 </li>
             </ul>
-            <span class="mr-5 searchFieldShow text-white">Поиск</span>
+            <span class="mr-5 searchFieldShow btn-primary text-white">Search</span>
         </div>
     </nav>
 
     <div class="searchField">
-        <form action="" class="form-row searchForm">
-            <input type="text" id="searchInput" placeholder="Поиск фильма">
-            <span class="text-white searchButton">Поиск</span>
+        <form action="" class="form-inline searchForm">
+            <input class="form-control" type="text" id="searchInput" placeholder="Search movie">
+            <span class="btn btn-success my-2 searchButton">Search</span>
             <span class="error"></span>
         </form>
         <div class="searchDropdown">
         </div>
     </div>
-
+    @php
+        $link = $_SERVER['SERVER_NAME'] . '/favourites';
+    @endphp
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary">
-                    <h5 class="modal-title" id="exampleModalLabel">Ссылка</h5>
+                    <h5 class="modal-title">Link</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    @php
-                        $link = $_SERVER['SERVER_NAME'] . '/favourites';
-                    @endphp
-                    <form class="row g-3">
-                        <div class="col-auto">
-                            <input type="text" class="form-control-plaintext" readonly value="Ссылка на список">
-                        </div>
-                        <div class="col-auto">
-                            <input type="text" value="{{$link}}" class="form-control" >
-                        </div>
-                    </form>
+                <div class="modal-body row">
+                    <div class="col-auto">
+                        <input type="text" class="form-control-plaintext" readonly value="Favourites link">
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" value="{{$link}}" class="form-control" >
+                    </div>
                 </div>
             </div>
         </div>
@@ -178,20 +174,20 @@
                             $(".searchDropdown").show()
                             if (!results.length) {
                                 $(".searchDropdown").show()
-                                $(".searchDropdown").append('<h3 class="eachResult">Нет результатов</h3>')
+                                $(".searchDropdown").append('<h3 class="eachResult">No results</h3>')
                                 setTimeout(() => {
                                     $(".searchDropdown").fadeOut(300)
-                                },3000)
+                                },500)
                             }
                             for (let i =0;i < results.length; i++) {
-                                $(".searchDropdown").append('<div class="eachResult"><a href="/'+results[i].id+'"><img src="https://image.tmdb.org/t/p/w500'+results[i].poster_path+'"></a>'+results[i].title+'<badge class="badge badge-primary ml-3 addButton" id="'+i+'">+</badge></div>')
+                                $(".searchDropdown").append('<div class="eachResult"><a href="/'+results[i].id+'"><img src="https://image.tmdb.org/t/p/w500'+results[i].poster_path+'"></a><a href="/'+results[i].id+'">'+results[i].title+'</a><badge class="badge badge-primary ml-3 addButton" id="'+i+'">+</badge></div>')
                             }
                         }
                     })
                 }
                 else {
                     $(".error").show()
-                    $(".error").html("Введите не менее 3 букв")
+                    $(".error").html("Type atlist more then 3 letters")
                 }
             })
 

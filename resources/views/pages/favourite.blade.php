@@ -5,12 +5,7 @@
 
 @section('content')
     <div class="container" id="app">
-        <div class="row">
-            <div class="col-md-6">
-                <h1>@{{ title }}</h1>
-            </div>
-        </div>
-        <div class="row" v-if="favourites.length !== 0">
+        <div class="row mt-2" v-if="favourites.length !== 0">
             <!-- Card -->
             <div class="list-group all ml-5 col-md-12 mb-3" v-for="(article, index) in favourites" :key="index">
                 <div class="list-group-item card d-flex flex-row p-1">
@@ -26,13 +21,12 @@
                     <!-- Card content -->
                     <div class="w-75 ml-3">
 
+                        <p class="h4 mt-3" v-if="article.title != ''"><a :href="`/${article.imdb_id}`"><strong>@{{ article.title }}</strong></a></p>
                         <hr>
-                        <p class="card-title" v-if="article.title != ''"><a :href="`/${article.imdb_id}`"><strong>@{{ article.title }}</strong></a></p>
-                        <hr>
-                        <p v-if="article.overview != ''">Описание: @{{ article.overview }}</p><hr>
-                        <p v-if="article.release_date != ''">Дата выхода: @{{ article.release_date }}</p><hr>
-                        <p v-if="article.vote_average != ''">Средняя оценка: @{{ article.vote_average }}</p><hr>
-                        <button class="btn btn-danger addToFavourite" @click="removeFromFav(article.imdb_id)">-</button>
+                        <p v-if="article.overview != ''"><a class="font-weight-lighter text-wrap badge badge-primary">Overview:</a> @{{ article.overview }}</p><hr>
+                        <p v-if="article.release_date != ''"><a class="font-weight-lighter text-wrap badge badge-primary">Release date:</a> @{{ article.release_date }}</p><hr>
+                        <p v-if="article.vote_average != ''"><a class="font-weight-lighter text-wrap badge badge-primary">Vote average:</a> @{{ article.vote_average }}</p><hr>
+                        <button class="btn btn-danger addToFavourite" @click="removeFromFav(article.imdb_id)">Remove</button>
                     </div>
 
                 </div>
@@ -41,7 +35,7 @@
         </div>
         <div class="card" v-else-if="favourites.length == 0">
             <div class="card-header">
-                <h3>Список пуст</h3>
+                <h3>List is empty</h3>
             </div>
         </div>
     </div>
@@ -53,9 +47,15 @@
     <script type="text/javascript">
         new Vue({
             el: '#app',
+            props: ['favourites'],
             data: {
                 title: "Newizze Movie List App",
-                favourites: [],
+                favourites: this.favourites,
+            },
+            watch: {
+                favourites() {
+                    this.getList();
+                }
             },
             created() {
                 let self = this
@@ -66,7 +66,7 @@
                     },
                     type: "GET",
                     url: "/list",
-                    data: "{}",
+                    data: {},
                     success: function (response) {
                         self.favourites = response
                         for(let i in self.favourites) {
@@ -123,34 +123,6 @@
                     })
                 }
             }
-        })
-    </script>
-    <script>
-        $(document).on('click', '.addButton', function (e) {
-            let index
-            if(!$(e.target).closest(".addButton").not(this).length) {
-                index = this.id
-            }
-            let movie = JSON.stringify(results[index])
-            console.log(index)
-            $.ajax({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                type: "POST",
-                url: "/add",
-                data: {
-                    movie: movie
-                },
-                success: response => {
-                    if (response.result !== 'undefined') {
-                        alert(response.result)
-                    }
-                    else if (response.error !== 'undefined'){
-                        alert(response.error)
-                    }
-                }
-            })
         })
     </script>
 @endsection

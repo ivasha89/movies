@@ -69,7 +69,7 @@ class MovieController extends Controller
      */
     public function search($id)
     {
-        $json = json_decode(file_get_contents("https://api.themoviedb.org/3/search/movie?api_key=9a5ee1373a374dd337c79bf08b38a072&language=ru-RU&query=$id"));
+        $json = json_decode(file_get_contents("https://api.themoviedb.org/3/search/movie?api_key=9a5ee1373a374dd337c79bf08b38a072&query=$id"));
         return json_encode($json);
     }
 
@@ -86,7 +86,7 @@ class MovieController extends Controller
         foreach($movies as $item) {
             if ($item == $movie['id']) {
                 return [
-                    'result' => 'Фильм уже в списке'
+                    'result' => 'Movie already in list'
                 ];
             }
         }
@@ -96,12 +96,12 @@ class MovieController extends Controller
             Movie::create($movie);
 
             $answer = [
-                'result' => 'Фильм добавлен'
+                'result' => 'Movie added'
             ];
         }
         else {
             $answer = [
-                'error' => 'Фильм не был добавлен'
+                'error' => 'Movie haven\'t been added'
             ];
         }
 
@@ -152,15 +152,16 @@ class MovieController extends Controller
     {
         try {
             $movie = Movie::where('imdb_id', $id)->firstOrFail();
+            $name = $movie->title;
             $movie->delete();
 
             $answer = [
-                'result' => 'Фильм удалён из избранного'
+                'result' => $name . ' deleted from favourites'
             ];
         }
         catch (ModelNotFoundException $exception) {
             $answer = [
-                'error' => 'Фильм не найден'
+                'error' => 'Not found'
             ];
         }
 

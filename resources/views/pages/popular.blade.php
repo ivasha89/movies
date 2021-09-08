@@ -5,12 +5,12 @@
 
 @section('content')
     <div class="container" id="app">
-        <div class="row">
-            <div class="col-md-6">
-                <h1>@{{ title }}</h1>
+        <div class="d-flex mb-5 mt-3">
+            <div class="w-75">
+                <h1 class="card-header">@{{ title }}</h1>
             </div>
-            <div class="col-md-6">
-                <button class="float-right btn btn-primary" v-on:click="visible=!visible">@{{visible?'Скрыть':'Отобразить'}}</button>
+            <div class="w-25">
+                <button class="float-right btn btn-primary" v-on:click="visible=!visible">@{{visible?'Hide':'Show'}}</button>
             </div>
         </div>
         <div class="d-flex flex-row">
@@ -31,16 +31,16 @@
                             <!-- Card content -->
                             <div class="card-body">
 
-                                <p class="card-title text-truncate" v-if="article.title != ''" data-toggle="tooltip" :title="`${article.title}`"><a><strong>@{{ article.title }}</strong></a></p>
+                                <p class="card-title text-truncate" v-if="article.title != ''" data-toggle="tooltip" :title="`${article.title}`"><a :href="`/${article.id }`"><strong>@{{ article.title }}</strong></a></p>
                                 <hr>
-                                <small v-if="article.release_date != ''">Дата выхода:@{{ article.release_date }}</small>
+                                <small v-if="article.release_date != ''">Release date:@{{ article.release_date }}</small>
 
                             </div>
 
-                            <div class="card-footer d-flex justify-content-center">
+                            <div class="d-flex">
 
-                                <button v-show="article.isInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(article.id)">Удалить</button>
-                                <button v-show="!article.isInFavs" class="btn btn-primary addToFavourite" @click="addToFav(index)">Добавить</button>
+                                <button v-show="article.isInFavs" class="flex-fill btn btn-danger addToFavourite" @click="removeFromFav(article.id)">Remove</button>
+                                <button v-show="!article.isInFavs" class="flex-fill btn btn-primary addToFavourite" @click="addToFav(index)">Add</button>
                             
                             </div>
                         </div>
@@ -57,24 +57,28 @@
                     </nav>
                 </div>
             </div>
-            <div class="list-group all col-md-3 card" v-show="visible" v-if="favourites.length">
-                <div class="list-group-item d-flex flex-row p-1" v-for="(favor,index) in favourites" :key="index">
-                    <div class="w-25 d-flex justify-content-center mr-3">
-                        <img width="70px" height="100px" :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
-                    </div>
-                    <div class="w-75">
-                        <small class="text-break" v-if="favor.title != ''">Название: <a :href="`/${favor.imdb_id}`">@{{ favor.title }}</a></small><hr>
-                        <small v-if="favor.release_date != ''">Дата выхода:@{{ favor.release_date }}</small><hr>
-                        <small v-if="favor.vote_average != ''">Средняя оценка: @{{ favor.vote_average }}</small><hr>
-                        <button class="btn btn-danger addToFavourite" @click="removeFromFav(favor.id)">-</button>
-                    </div>
-                    <div class="float-right">
+            <div class="w-25" v-show="visible" v-if="favourites.length">
+                <div class="card mb-3" v-for="(favor,index) in favourites" :key="index">
+                    <div class="row no-gutters">
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <small class="text-break card-title" v-if="favor.title != ''">Title: <a :href="`/${favor.imdb_id}`">@{{ favor.title }}</a></small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="position:relative;">
+                                <button style="right: 5px;position: absolute;" class="close addToFavourite" @click="removeFromFav(favor.imdb_id)">
+                                    <span style="color: red;">&times;</span>
+                                </button>
+                                <img  width="100%" height="auto" :src="`https://image.tmdb.org/t/p/w500${favor.poster_path}`" alt="Card image cap">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card w-25 empty" v-else-if="favourites.length == 0" v-show="visible">
+            <div class="w-25 empty" v-else-if="favourites.length == 0" v-show="visible">
                 <div class="card-body">
-                    <p>Список пуст</p>
+                    <p>Favourites list is empty</p>
                 </div>
             </div>
         </div>
@@ -86,13 +90,20 @@
         <script type="text/javascript">
             new Vue({
                 el: '#app',
+                props: ['favourites'],
                 data: {
-                    title: "Newizze Movie List App",
+                    title: "Popular movies",
                     articles: [],
                     visible: false,
-                    favourites: [],
+                    favourites: this.favourites,
+                },
+                watch: {
+                    favourites() {
+                        this.getList();
+                    }
                 },
                 created() {
+                    window.document.title = this.title
                     let self = this;
                     let imdbMovies = []
 
@@ -108,7 +119,7 @@
                     $.ajax({
                         async: true,
                         crossDomain: false,
-                        url: 'https://api.themoviedb.org/3/movie/popular?api_key=9a5ee1373a374dd337c79bf08b38a072&language=ru-RU&page='+pageNumber,
+                        url: 'https://api.themoviedb.org/3/movie/popular?api_key=9a5ee1373a374dd337c79bf08b38a072&page='+pageNumber,
                         method: "GET",
                         headers: {
                             "Content-Type": "application/json",
