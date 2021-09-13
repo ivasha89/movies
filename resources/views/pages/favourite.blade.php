@@ -33,7 +33,7 @@
                 <!-- Card -->
             </div>
         </div>
-        <div class="card" v-else-if="favourites.length == 0">
+        <div class="card mt-5" v-else-if="favourites.length == 0">
             <div class="card-header">
                 <h3>List is empty</h3>
             </div>
@@ -54,7 +54,7 @@
             },
             watch: {
                 favourites() {
-                    this.getList();
+                    this.getList;
                 }
             },
             created() {

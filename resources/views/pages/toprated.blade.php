@@ -34,24 +34,53 @@
                                 <p class="card-title text-truncate" v-if="article.title != ''" data-toggle="tooltip" :title="`${article.title}`"><a :href="`/${article.id }`"><strong>@{{ article.title }}</strong></a></p>
                                 <hr>
                                 <small v-if="article.release_date != ''">Release date:@{{ article.release_date }}</small>
+                                <hr>
+                                <small v-if="article.vote_average != ''">Vote average: @{{ article.vote_average }}</small>
                             </div>
 
-                            <div class="card-footer d-flex justify-content-center">
-                                <button v-show="article.isInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(article.id)">Remove</button>
-                                <button v-show="!article.isInFavs" class="btn btn-primary addToFavourite" @click="addToFav(index)">Add</button>
+                            <div class="d-flex">
+                                <button v-show="article.isInFavs" class="flex-fill btn btn-danger addToFavourite" @click="removeFromFav(article.id)">Remove</button>
+                                <button v-show="!article.isInFavs" class="flex-fill btn btn-primary addToFavourite" @click="addToFav(index)">Add</button>
                             </div>
 
                         </div>
                         <!-- Card -->
                     </div>
                 </div>
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination pg-blue">
-                        @for ($i = 1;$i < 10;$i++)
-                            <li class="page-item"><a class="page-link" href="?page={{$i}}">{{$i}}</a></li>
-                        @endfor
-                    </ul>
-                </nav>
+                <div class="col-md-12 mt-3 mb-5">
+                    <nav aria-label="results pages">
+                        <ul class="pagination pg-blue">
+                            
+                            <li v-if="page > 5"class="page-item">
+                                <a class="page-link" href="/">1</a>
+                            </li>
+                            <li v-if="page > 100"class="page-item">
+                                <a class="page-link" :href="`?page=${page-100}`">-100</a>
+                            </li>
+                            <li v-if="page > 10"class="page-item">
+                                <a class="page-link" :href="`?page=${page-10}`">-10</a>
+                            </li>
+                            <li v-bind:class="{'disabled': page == 1, 'page-item ml-3': true }">
+                                <a class="page-link" @click="pageChange(page-1)" :href="`?page=${page}`">Previous</a>
+                            </li>
+                            <li v-bind:class="{'page-item': true, 'active': page == pageNumber}" v-for="pageNumber in pages.slice(pageStart-1, pageEnd)">
+                                <a v-bind:class="{'disabled': page == pageNumber, 'page-link': true }" :href="`?page=${pageNumber}`">@{{pageNumber}}</a>
+                            </li>
+                            <li v-bind:class="{'disabled': page > pages.length || page == 456, 'page-item mr-3': true }">
+                                <a class="page-link" @click="pageChange(page+1)" :href="`?page=${page}`">Next</a>
+                            </li>
+                            <li v-if="page < 446"class="page-item">
+                                <a class="page-link" :href="`?page=${page+10}`">+10</a>
+                            </li>
+                            <li v-if="page < 356"class="page-item">
+                                <a class="page-link" :href="`?page=${page+100}`">+100</a>
+                            </li>
+                            <li v-if="page < 452" class="page-item">
+                                <a class="page-link" href="?page=456">456</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
             <div class="w-25" v-show="visible" v-if="favourites.length">
                 <div class="card mb-3" v-for="(favor,index) in favourites" :key="index">
@@ -91,14 +120,21 @@
                 title: "Top Rated Movies",
                 articles: [],
                 visible: false,
-                favourites: this.favourites
+                favourites: this.favourites,
+                page: 0,
+                pages: [],
+                pageStart: 1,
+                pageEnd: 6,
             },
             watch: {
                 favourites() {
-                    this.getList();
+                    this.getList;
                 }
             },
             created() {
+                for(let i=1;i<501;i++) {
+                        this.pages.push(i)
+                    }
                 let self = this
                 window.document.title = self.title
                 let imbdMovies = []
@@ -125,10 +161,14 @@
                     pageNumber = 1
                 }
 
+                this.page = pageNumber
+                this.pageChange(pageNumber)
+
+
                 $.ajax({
                     async: true,
                     crossDomain: false,
-                    url: 'https://api.themoviedb.org/3/movie/top_rated?api_key=9a5ee1373a374dd337c79bf08b38a072&page='+pageNumber,
+                    url: 'https://api.themoviedb.org/3/movie/top_rated?api_key=9a5ee1373a374dd337c79bf08b38a072&page='+this.page,
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -180,12 +220,14 @@
                         data: {},
                         success: response => {
                             this.favourites = response
+                        },
+                        error: respons => {
+                            this.favourites = []
                         }
                     })
                 },
                 addToFav(index) {
                     let movie = JSON.stringify(this.articles[index]);
-                    this.articles[index].isInFavs = !this.articles[index].isInFavs
                     $.ajax({
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -196,11 +238,33 @@
                             movie: movie
                         },
                         success: response => {
-                            if (response.result !== 'undefined') {
-                                this.getList()
+                            if (typeof response.result !== 'undefined') {
+                                $.ajax({
+                                    headers: {
+                                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                    },
+                                    type: "GET",
+                                    dataType: "json",
+                                    url: "/list",
+                                    data: {},
+                                    success: response => {
+                                        this.favourites = response
+                                        if (this.favourites.length){
+                                            console.log(this.articles[index], this.favourites)
+                                            for (let i in this.favourites) {
+                                                if (this.favourites[i].imdb_id == this.articles[index].id) {
+                                                    this.articles[index].isInFavs = !this.articles[index].isInFavs
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
                                 alert(response.result)
                             }
-                        }
+                            else if (typeof response.error !== 'undefined') {
+                                alert(response.error)
+                            }
+                        },
                     })
                 },
                 removeFromFav(id) {
@@ -226,6 +290,17 @@
                             }
                         }
                     })
+                },
+                pageChange(page) {
+                    this.page = +page
+                    this.pageStart = 1
+                    this.pageEnd = 456
+                    if (page > 3) {
+                        this.pageStart = page - 3
+                    }
+                    if (page < 453) {
+                    this.pageEnd = this.pageStart + 6
+                    }
                 }
             }
         })

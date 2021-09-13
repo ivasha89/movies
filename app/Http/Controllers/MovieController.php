@@ -16,7 +16,11 @@ class MovieController extends Controller
      */
     public function index()
     {
-        $movies = Movie::all();
+        $movies = [];
+        try {
+            $movies = Movie::all();
+        }
+        catch(\Throwable $exseption) {}
 
         return response()->json($movies);
     }
@@ -69,7 +73,8 @@ class MovieController extends Controller
      */
     public function search($id)
     {
-        $json = json_decode(file_get_contents("https://api.themoviedb.org/3/search/movie?api_key=9a5ee1373a374dd337c79bf08b38a072&query=$id"));
+        $string = str_replace(' ', '+', $id);
+        $json = json_decode(file_get_contents("https://api.themoviedb.org/3/search/movie?api_key=9a5ee1373a374dd337c79bf08b38a072&query=$string"));
         return json_encode($json);
     }
 
@@ -81,27 +86,34 @@ class MovieController extends Controller
      */
     public function store(Request $request)
     {
-        $movies = Movie::all()->pluck('imdb_id');
-        $movie = json_decode($request->movie, true);
-        foreach($movies as $item) {
-            if ($item == $movie['id']) {
-                return [
-                    'result' => 'Movie already in list'
+        try {
+            $movies = Movie::all()->pluck('imdb_id');
+            $movie = json_decode($request->movie, true);
+            foreach($movies as $item) {
+                if ($item == $movie['id']) {
+                    return [
+                        'result' => 'Movie already in list'
+                    ];
+                }
+            }
+            if (count($movie)) {
+                $movie['imdb_id'] = $movie['id'];
+                $movie['release_date'] = date("Y-m-d", strtotime($movie['release_date']));
+                $newMovie = Movie::create($movie);
+
+                $answer = [
+                    'result' => 'Movie '.$newMovie->title.' added'
+                ];
+            }
+            else {
+                $answer = [
+                    'error' => 'Movie haven\'t been added'
                 ];
             }
         }
-        if (count($movie)) {
-            $movie['imdb_id'] = $movie['id'];
-            $movie['release_date'] = date("Y-m-d", strtotime($movie['release_date']));
-            Movie::create($movie);
-
+        catch (\Throwable $exc) {
             $answer = [
-                'result' => 'Movie added'
-            ];
-        }
-        else {
-            $answer = [
-                'error' => 'Movie haven\'t been added'
+                'error' => 'Table "movies" not found in database'
             ];
         }
 

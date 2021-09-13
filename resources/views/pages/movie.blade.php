@@ -34,9 +34,6 @@
                         <!-- Card image -->
                         <div class="view view-cascade overlay">
                             <img class="card-img-top" :src="`https://image.tmdb.org/t/p/w500/${movie.backdrop_path}`" alt="Sample image">
-                            <a href="#!">
-                                <div class="mask rgba-white-slight"></div>
-                            </a>
                         </div>
 
                         <!-- Card content -->
@@ -52,7 +49,7 @@
                                 <p v-if="movie.original_language != ''">Original language: @{{ movie.original_language }}</p><hr>
                                 <p v-if="movie.release_date != ''">Release date: @{{ movie.release_date }}</p><hr>
                                 <p v-if="movie.vote_average != ''">Vote average: @{{ movie.vote_average }}</p><hr>
-                                <button v-if="movieInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(movie.imdb_id)">-</button>
+                                <button v-if="movieInFavs" class="btn btn-danger addToFavourite" @click="removeFromFav(movie.id)">-</button>
                                 <button v-else class="btn btn-primary addToFavourite" @click="addToFav(index)">+</button>
                             </div>
                             <!-- Social shares -->
@@ -139,47 +136,68 @@
     <script type="text/javascript">
         new Vue({
             el: '#app',
+            props: ['favourites'],
             data: {
                 title: "Newizze Movie List App",
                 movie: {},
                 videos: [],
                 similar: [],
                 visible: false,
-                favourites: [],
+                favourites: this.favourites,
                 movieInFavs: false,
+            },
+            watch: {
+                favourites() {
+                    this.getList;
+                }
             },
             created() {
                 let self = this;
 
-                self.getList()
-
                 let presentUrl = window.location.href;
                 let newData = presentUrl.split("/");
                 let movie_id = newData[newData.length - 1];
-                let settings = {
-                    "async": true,
-                    "crossDomain": false,
-                    'url': 'https://api.themoviedb.org/3/movie/'+movie_id+'?api_key=9a5ee1373a374dd337c79bf08b38a072&page=1',
-                    "method": "GET",
-                    "headers": {
+                $.ajax({
+                    async: true,
+                    crossDomain: false,
+                    url: 'https://api.themoviedb.org/3/movie/'+movie_id+'?api_key=9a5ee1373a374dd337c79bf08b38a072&page=1',
+                    method: "GET",
+                    headers: {
                         "Content-Type": "application/json",
                         "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5YTVlZTEzNzNhMzc0ZGQzMzdjNzliZjA4YjM4YTA3MiIsInN1YiI6IjVmZDQ5M2MwMDkxZTYyMDA0MTU4Nzg1NiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.hTlKsb3Pq4ClRO-vDJgeAZbzRxvTI3sIRLKS-DcujQg",
                     },
-                    "processData": false,
-                    "data": "{}"
-                }
-
-                $.ajax(settings).done(function (response) {
-                    self.movie = response;
-                    let date = new Date(response.release_date)
-                    self.movie.release_date = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate() ) + '.' + (date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : date.getMonth()+1) + '.' + date.getFullYear()
-                    window.document.title = response.title
-                    for(let j = 0;j < self.favourites.length;j++) {
-                        if (self.favourites[j].imdb_id == response.id) {
-                            self.movieInFavs = true
+                    processData: false,
+                    data: {},
+                    success: response => {
+                        this.movie = response;
+                        let date = new Date(response.release_date)
+                        this.movie.release_date = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate() ) + '.' + (date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : date.getMonth()+1) + '.' + date.getFullYear()
+                        window.document.title = response.title
+                        $.ajax({
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            type: "GET",
+                            dataType: "json",
+                            url: "/list",
+                            data: {},
+                            success: resp => {
+                                this.favourites = resp
+                                if (this.favourites.length){
+                                    for (let i in this.favourites) {
+                                        if (this.favourites[i].imdb_id == this.movie.id) {
+                                            this.movieInFavs = !this.movieInFavs
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        for(let j = 0;j < this.favourites.length;j++) {
+                            if (this.favourites[j].imdb_id == response.id) {
+                                this.movieInFavs = true
+                            }
                         }
                     }
-                    //console.log(self.movie);
                 })
 
                 setTimeout(() => {
@@ -257,15 +275,35 @@
                             movie: movie
                         },
                         success: response => {
-                            if (response.result !== 'undefined') {
-                                this.getList()
+                            if (typeof response.result !== 'undefined') {
+                                $.ajax({
+                                    headers: {
+                                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                    },
+                                    type: "GET",
+                                    dataType: "json",
+                                    url: "/list",
+                                    data: {},
+                                    success: resp => {
+                                        this.favourites = resp
+                                        if (this.favourites.length){
+                                            for (let i in this.favourites) {
+                                                if (this.favourites[i].imdb_id == this.movie.id) {
+                                                    this.movieInFavs = !this.movieInFavs
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
                                 alert(response.result)
+                            }
+                            else if (typeof response.error !== 'undefined') {
+                                alert(response.error)
                             }
                         }
                     })
                 },
                 removeFromFav(id) {
-                    console.log(id)
                     $.ajax({
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -274,12 +312,12 @@
                         url: "/"+id,
                         data: {},
                         success: response => {
-                            console.log(response)
-                            if (response.result !== 'undefined') {
+                            if (typeof response.result !== 'undefined') {
                                 this.getList()
+                                this.movieInFavs = !this.movieInFavs
                                 alert(response.result)
                             }
-                            else if (response.error !== 'undefined'){
+                            else if (typeof response.error !== 'undefined'){
                                 alert(response.error)
                             }
                         }
